@@ -3,11 +3,28 @@
 #include <math.h>
 
 #include "Settings.cuh"
+#include"SignedDistanceFunctions.cuh"
 
 // get sign function
 #define sign(x) ((x > 0) - (x < 0))
 // clamp macro
 #define clamp(x, a, b) (x < a ? a : (x > b ? b : x))
+
+__device__
+inline float rm::SmoothMin(float dstA, float dstB, float k) {
+    float h = std::fmaxf(k - abs(dstA - dstB), 0) / k;
+    return std::fminf(dstA, dstB) - h * h * h * k * (1.0f / 6.0f);
+}
+
+// function to apply Beer-Lambert law to diffuse intensityi
+__device__
+float3 rm::ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient)
+{
+    // calculate light absorption using Beer-Lambert law
+    float absorption = exp(-absorptionCoefficient * distanceTraveled);
+    
+    return color * absorption + FOG_COLOR * (1 - absorption);
+}
 
 __device__
 float rm::RayMarching::MapTheWorld(float3 _p)
@@ -85,7 +102,12 @@ float3 rm::RayMarching::Raymarch(float3 ro, float3 rd)
 
             float diffuseIntensity = max(0.0, dot(normal, directionToLight));
 
-            return make_float3(1.0, 0.0, 0.0) * diffuseIntensity;
+            //diffuseIntensity = //ApplyBeerLambert(diffuseIntensity, distanceTraveled, 1.5);
+            float3 finalColor =  make_float3(1.0, 0.0, 0.0) * diffuseIntensity;
+
+            finalColor = ApplyBeerLambert(finalColor, distanceTraveled, FOG_THICKNESS);
+            
+            return finalColor;
         }
 
         if (distanceTraveled > MAXIMUM_TRACE_DISTANCE) // miss
@@ -96,7 +118,7 @@ float3 rm::RayMarching::Raymarch(float3 ro, float3 rd)
 
     // If we get here, we didn't hit anything so just
     // return a background color
-    return make_float3(0.1);
+    return ApplyBeerLambert(make_float3(1), distanceTraveled, FOG_THICKNESS);
     //return make_float3(distanceTraveled/5);
     //return make_float3(0.390625f, 0.58203125f, 0.92578125f);
 }

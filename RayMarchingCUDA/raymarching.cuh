@@ -14,26 +14,10 @@
 namespace rm
 {
     __device__
-    inline float DistanceFromPlane(float3 p, float h)
-    {
-        return p.y - h;
-    }
-
-    __device__
-    inline float SmoothMin(float dstA, float dstB, float k) {
-        float h = std::fmaxf(k - abs(dstA - dstB), 0) / k;
-        return std::fminf(dstA, dstB) - h * h * h * k * (1.0f / 6.0f);
-    }
+    inline float SmoothMin(float dstA, float dstB, float k);
     
-    // params:
-    // p: arbitrary point in 3D space
-    // c: the center of our sphere
-    // r: the radius of our sphere
     __device__
-    inline float DistanceFromSphere(float3 p, float3 c, float r)
-    {
-        return length(p - c) - r;
-    }
+    float3 ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient);
 
     struct Camera
     {

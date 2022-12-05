@@ -95,6 +95,7 @@
     <ClInclude Include="CUDAHelper.cuh" />
     <ClInclude Include="raymarching.cuh" />
     <ClInclude Include="Settings.cuh" />
+    <ClInclude Include="SignedDistanceFunctions.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
