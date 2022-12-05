@@ -16,8 +16,7 @@ namespace rm
     __device__
     inline float SmoothMin(float dstA, float dstB, float k);
     
-    __device__
-    float3 ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient);
+    
 
     struct Camera
     {
@@ -35,6 +34,8 @@ namespace rm
         Camera cam;
         __device__
         float MapTheWorld(float3 _p);
+        __device__
+        float3 ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient);
         __device__
         float3 CalculateNormal(float3 _p);
         __device__ 

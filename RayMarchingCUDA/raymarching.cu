@@ -5,6 +5,8 @@
 #include "Settings.cuh"
 #include"SignedDistanceFunctions.cuh"
 
+#pragma region Utils
+
 // get sign function
 #define sign(x) ((x > 0) - (x < 0))
 // clamp macro
@@ -16,15 +18,7 @@ inline float rm::SmoothMin(float dstA, float dstB, float k) {
     return std::fminf(dstA, dstB) - h * h * h * k * (1.0f / 6.0f);
 }
 
-// function to apply Beer-Lambert law to diffuse intensityi
-__device__
-float3 rm::ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient)
-{
-    // calculate light absorption using Beer-Lambert law
-    float absorption = exp(-absorptionCoefficient * distanceTraveled);
-    
-    return color * absorption + FOG_COLOR * (1 - absorption);
-}
+#pragma endregion
 
 __device__
 float rm::RayMarching::MapTheWorld(float3 _p)
@@ -36,6 +30,16 @@ float rm::RayMarching::MapTheWorld(float3 _p)
 
     // return min union
     return SmoothMin(SmoothMin(sphere_0, sphere_1, 0.5), plane_0, 1.0);
+}
+
+// function to apply Beer-Lambert law to diffuse intensityi
+__device__
+float3 rm::RayMarching::ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient)
+{
+    // calculate light absorption using Beer-Lambert law
+    float absorption = exp(-absorptionCoefficient * distanceTraveled);
+    
+    return color * absorption + FOG_COLOR * (1 - absorption);
 }
 
 __device__
