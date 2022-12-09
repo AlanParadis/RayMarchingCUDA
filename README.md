@@ -3,12 +3,12 @@
 -
 ## Controls
 
-W : Forward
-S : Backward
-A : Left
-D : Right
-Q : Down
-E : Up
-Escape : Quit
+W : Forward\
+S : Backward\
+A : Left\
+D : Right\
+Q : Down\
+E : Up\
+Escape : Quit\
 
 ----
