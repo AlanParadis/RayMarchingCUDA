@@ -9,6 +9,6 @@ A : Left\
 D : Right\
 Q : Down\
 E : Up\
-Escape : Quit\
+Escape : Quit
 
 ----
