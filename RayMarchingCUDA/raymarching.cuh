@@ -17,7 +17,6 @@ namespace rm
     inline float SmoothMin(float dstA, float dstB, float k);
     
     
-
     struct Camera
     {
         float3 pos;
@@ -31,7 +30,7 @@ namespace rm
     class RayMarching
     {
     private:
-        Camera cam;
+        Camera camera;
         __device__
         float MapTheWorld(float3 _p);
         __device__

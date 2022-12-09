@@ -20,6 +20,7 @@ inline float rm::SmoothMin(float dstA, float dstB, float k) {
 
 #pragma endregion
 
+// Signed Distance Function for the world
 __device__
 float rm::RayMarching::MapTheWorld(float3 _p)
 {
@@ -32,7 +33,7 @@ float rm::RayMarching::MapTheWorld(float3 _p)
     return SmoothMin(SmoothMin(sphere_0, sphere_1, 0.5), plane_0, 1.0);
 }
 
-// function to apply Beer-Lambert law to diffuse intensityi
+// Apply Beer-Lambert law to generate distance based fog
 __device__
 float3 rm::RayMarching::ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient)
 {
@@ -42,6 +43,7 @@ float3 rm::RayMarching::ApplyBeerLambert(float3 color, float distanceTraveled, f
     return color * absorption + FOG_COLOR * (1 - absorption);
 }
 
+// from: https://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/#surface-normals-and-lighting
 __device__
 float3 rm::RayMarching::CalculateNormal(float3 _p)
 {
@@ -89,26 +91,18 @@ float3 rm::RayMarching::Raymarch(float3 ro, float3 rd)
         
         if (distanceToClosest < MINIMUM_HIT_DISTANCE) // hit
         {
-            //print distance
-            //break;
-            
             // We hit something! Return red for now
             float3 normal = CalculateNormal(currentPosition);
-
-            //return normal * 0.5 + 0.5;
-
             // For now, hard-code the light's position in our scene
             float3 lightPosition = make_float3(2.0, -5.0, 3.0);
-
             // Calculate the unit direction vector that points from
             // the point of intersection to the light source
             float3 directionToLight = normalize(currentPosition - lightPosition);
-
+            // Calculate the diffuse intensity
             float diffuseIntensity = max(0.0, dot(normal, directionToLight));
-
-            //diffuseIntensity = //ApplyBeerLambert(diffuseIntensity, distanceTraveled, 1.5);
+            // Apply light to red colored scene
             float3 finalColor =  make_float3(1.0, 0.0, 0.0) * diffuseIntensity;
-
+            // Generate distance fog with Beer Lambert law
             finalColor = ApplyBeerLambert(finalColor, distanceTraveled, FOG_THICKNESS);
             
             return finalColor;
@@ -123,61 +117,101 @@ float3 rm::RayMarching::Raymarch(float3 ro, float3 rd)
     // If we get here, we didn't hit anything so just
     // return a background color
     return ApplyBeerLambert(make_float3(1), distanceTraveled, FOG_THICKNESS);
-    //return make_float3(distanceTraveled/5);
-    //return make_float3(0.390625f, 0.58203125f, 0.92578125f);
 }
 
 void rm::RayMarching::Init(sf::RenderWindow* _window)
 { 
-    cam.pos = make_float3(0.0f, 0.0f, 0.0f);
-    cam.dir = make_float3(0.0f, 0.0f, 1.0f);
-	cam.right = normalize(cross(cam.dir, make_float3(0, 1, 0)));
-	cam.up = normalize(cross(cam.right, cam.dir));
+    // camera setup
+    camera.pos = make_float3(0.0f, 0.0f, 0.0f);
+    camera.dir = make_float3(1.0f, 0.0f, 0.0f);
+	camera.right = normalize(cross(camera.dir, make_float3(0, 1, 0)));
+	camera.up = normalize(cross(camera.right, camera.dir));
 	float fov = FOV / 180.0f * float(M_PI);
-	cam.invhalffov = 1.0f / std::tan(fov / 2.0f);
-
-    //_window->setMouseCursorVisible(false);
-    //_window->setMouseCursorGrabbed(true);
+	camera.invhalffov = 1.0f / std::tan(fov / 2.0f);
+    // grab mouse
+    _window->setMouseCursorVisible(false);
+    _window->setMouseCursorGrabbed(true);
+    // set mouse to center
+    sf::Vector2i center(_window->getSize().x / 2, _window->getSize().y / 2);
+    sf::Mouse::setPosition(center, *_window);
 }
 
 void rm::RayMarching::Update(sf::RenderWindow* _window, float _dt)
 {
-    /*
+    //! KEYBOARDS INPUTS
+    
+    // Handle user input to move the camera
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
     {
-        cam.pos += CAM_SPEED * _dt * cam.dir;
+        // Move camera forward
+        camera.pos += camera.dir * CAM_SPEED * _dt;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
     {
-        cam.pos -= CAM_SPEED * _dt * cam.dir;
+        // Move camera backward
+        camera.pos -= camera.dir * CAM_SPEED * _dt;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
-        cam.pos -= CAM_SPEED * _dt * cam.right;
+        // Move camera left
+        camera.pos -= camera.right * CAM_SPEED * _dt;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
     {
-        cam.pos += CAM_SPEED * _dt * cam.right;
+        // Move camera right
+        camera.pos += camera.right * CAM_SPEED * _dt;
     }
-    */
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+    {
+        // Move camera up
+        camera.pos += camera.up * CAM_SPEED * _dt;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+    {
+        // Move camera down
+        camera.pos -= camera.up * CAM_SPEED * _dt;
+    }
+
+    //! MOUSE LOOK
+
+    // Get screen center
+    sf::Vector2i center(_window->getSize().x / 2, _window->getSize().y / 2);
+    // get mose delta from screen center
+    sf::Vector2i delta = sf::Mouse::getPosition(*_window) - center;
+   
+    // get rotations
+    float pitch = -delta.y * CAM_SENSITIVITY;
+    float yaw = delta.x * CAM_SENSITIVITY;
     
+    // First, apply the yaw rotation around the camera's up vector
+    camera.dir = normalize(camera.dir * cos(yaw) + cross(camera.dir, camera.up) * sin(yaw));
+    // Then, apply the pitch rotation around the camera's right vector
+    camera.dir = normalize(camera.dir * cos(pitch) + camera.up * sin(pitch));    
+    
+    // update cam right and up vector
+	camera.right = normalize(cross(camera.dir, make_float3(0, 1, 0)));
+    camera.up = normalize(cross(camera.right, camera.dir));
+    
+    // reset mouse in center
+    sf::Mouse::setPosition(center, *_window);
 }
 
 __device__ 
 float3 rm::RayMarching::Render(int _pX, int _pY)
 {
-    float2 resolution = make_float2((float)ImageWidth, (float)ImageHeight);   //screen resolution
-	float2 coordinates = make_float2((float)_pX, (float)_pY);   //fragment coordinates
-    
-    //float2 uv = ( 2 * coordinates - resolution) / resolution.y;
+    //screen resolution
+    float2 resolution = make_float2((float)ImageWidth, (float)ImageHeight);   
+	// pixel coordinates
+    float2 coordinates = make_float2((float)_pX, (float)_pY);
+    // get screen uv
     float2 uv = ( coordinates - (resolution * 0.5)) / resolution.y;
-	
-    float3 ro = make_float3(0.0f);   //ray origin
-    float3 rd = normalize(make_float3(uv, 1.0f) - ro);   //ray direction
-    
+    // ray origin
+    float3 ro = camera.pos;
+    // ray direction
+    float3 rd = normalize(camera.dir + uv.x * camera.right + uv.y * camera.up + camera.dir * camera.invhalffov);
+    // Raymarch to find the shaded color of the fragment
     float3 shaded_color = Raymarch(ro, rd);
-    //float3 shaded_color = make_float3(uv.x, uv.y, 0.0f);
-
+    // return color
     return shaded_color;
 }
 
