@@ -115,7 +115,7 @@ MAIN()
 
     raymarching->Init(&window);
     
-	sf::Clock deltaClock; // Le Chrono
+	sf::Clock deltaClock;
 	int compteur = 0;
 
 	while (window.isOpen())
@@ -131,7 +131,7 @@ MAIN()
 			{
 				if (event.key.code == sf::Keyboard::Escape) exit(0);
 			}
-            
+            raymarching->Event(&window, &event);
 		}
         
 		raymarching->Update(&window, deltaClock.restart().asSeconds());
@@ -178,5 +178,7 @@ MAIN()
 	raymarching->Shutdown();
 
 	cudaFree(raymarching);
+
+	return 0;
 }
 

@@ -1,5 +1,5 @@
 # RayMarchingCUDA
-![last render](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/LastRender.png)
+![last render](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/LastRender.gif)
 -
 ## Controls
 
@@ -9,6 +9,7 @@ A : Left\
 D : Right\
 Q : Down\
 E : Up\
-Escape : Quit
+Escape : Quit\
+Middle Mouse : Unlock mouse
 
 ----

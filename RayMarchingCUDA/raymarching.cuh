@@ -10,9 +10,14 @@
 
 #include "CUDAHelper.cuh"
 #include "Settings.cuh"
+#include "matrix.cuh"
 
 namespace rm
 {
+    //function that take a point, mat3 and a origin a return the rotated point
+    __device__ __host__
+    inline float3 RotatePoint(float3 point, mat3 rotation, float3 origin);
+    
     __device__
     inline float SmoothMin(float dstA, float dstB, float k);
     
@@ -41,9 +46,13 @@ namespace rm
         float3 Raymarch(float3 ro, float3 rd);
 
         sf::Vector2i lastMousePos;
+        // time since Raymarching Init
+        float time;
+        bool isMouseLock;
 
     public:
         void Init(sf::RenderWindow* _window);
+        void Event(sf::RenderWindow* _window, sf::Event* _evt);
         void Update(sf::RenderWindow* _window, float _dt);
         __device__ 
         float3 Render(int _pX, int _pY);

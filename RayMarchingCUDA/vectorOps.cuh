@@ -1,6 +1,7 @@
 #ifndef VECTOROPS_H_
 #define VECTOROPS_H_
 
+// Modified version of
 // http://biomol.bme.utexas.edu/~mh43854/openmm/archive/openmm-master/platforms/cuda/src/kernels/vectorOps.cu
 
 #include "CUDAHelper.cuh"

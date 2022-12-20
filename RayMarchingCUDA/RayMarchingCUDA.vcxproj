@@ -93,6 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CUDAHelper.cuh" />
+    <ClInclude Include="matrix.cuh" />
     <ClInclude Include="raymarching.cuh" />
     <ClInclude Include="Settings.cuh" />
     <ClInclude Include="SignedDistanceFunctions.cuh" />
