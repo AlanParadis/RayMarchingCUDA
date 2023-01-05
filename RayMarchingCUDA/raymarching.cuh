@@ -17,11 +17,7 @@ namespace rm
     //function that take a point, mat3 and a origin a return the rotated point
     __device__ __host__
     inline float3 RotatePoint(float3 point, mat3 rotation, float3 origin);
-    
-    __device__
-    inline float SmoothMin(float dstA, float dstB, float k);
-    
-    
+     
     struct Camera
     {
         float3 pos;
@@ -40,6 +36,10 @@ namespace rm
         float MapTheWorld(float3 _p);
         __device__
         float3 ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient);
+        __device__
+        float3 gradient(float t);
+        __device__
+        float3 ColorFromOrbitTrap(float3 currentPosition, float3 orbitTrap);
         __device__
         float3 CalculateNormal(float3 _p);
         __device__ 

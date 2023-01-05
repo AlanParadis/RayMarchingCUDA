@@ -14,16 +14,16 @@
 #define MOUSE_SENSITIVITY 0.01;
 
 // Camera settings
-#define CAM_SPEED 2.5
+#define CAM_SPEED 1.5
 #define CAM_SENSITIVITY 0.001
 #define FOV 120.0f
 
 #define NUMBER_OF_STEPS 128
-#define MINIMUM_HIT_DISTANCE 0.01f
-#define MAXIMUM_TRACE_DISTANCE 20
+#define MINIMUM_HIT_DISTANCE 0.001f
+#define MAXIMUM_TRACE_DISTANCE 10
 
 
 #define FOG_COLOR make_float3(0.39f, 0.58f, 0.92f)
-#define FOG_THICKNESS 0.125
+#define FOG_THICKNESS 0.155f
 
 #endif  /* !SETTINGS_H_ */

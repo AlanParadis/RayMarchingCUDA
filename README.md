@@ -1,5 +1,5 @@
 # RayMarchingCUDA
-![last render](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/LastRender.gif)
+![last render](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/LastRender.png)
 -
 ## Controls
 

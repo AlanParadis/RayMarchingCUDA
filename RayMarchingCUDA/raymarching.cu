@@ -4,19 +4,11 @@
 
 #include "Settings.cuh"
 #include"SignedDistanceFunctions.cuh"
+#include "Utils.cuh"
+
+using namespace rm;
 
 #pragma region Utils
-
-// get sign function
-#define sign(x) ((x > 0.f) - (x < 0.f))
-// clamp macro
-#define clamp(x, a, b) (x < a ? a : (x > b ? b : x))
-
-__device__
-inline float rm::SmoothMin(float dstA, float dstB, float k) {
-    float h = std::fmaxf(k - abs(dstA - dstB), 0.f) / k;
-    return std::fminf(dstA, dstB) - h * h * h * k * (1.0f / 6.0f);
-}
 
 __device__ __host__
 inline float3 rm::RotatePoint(float3 point, mat3 rotation, float3 origin)
@@ -28,16 +20,18 @@ inline float3 rm::RotatePoint(float3 point, mat3 rotation, float3 origin)
 
 // Signed Distance Function for the world
 __device__
-float rm::RayMarching::MapTheWorld(float3 _p)
+float RayMarching::MapTheWorld(float3 _p)
 {
+    return MengerCube(_p);
+    
     float3 sphere_0Pos = make_float3(0.0f, 0.0f, 2.0f);
     float sphere_0 = DistanceFromSphere(_p, sphere_0Pos, 0.5f);
     //float sphere_1 = DistanceFromSphere(_p, make_float3(-0.5f,0.75f,2.0f), 0.5f);
 
-    float3 pos = RotatePoint(make_float3(-0.5f, 0.4f, 2.0f), mat3::rotateY(time), sphere_0Pos);
+    float3 pos = rm::RotatePoint(make_float3(-0.5f, 0.4f, 2.0f), mat3::rotateY(time), sphere_0Pos);
     float sphere_1 = DistanceFromSphere(_p, pos, 0.2f);
     
-    pos = RotatePoint(make_float3(-0.5f, 0.6f, 2.0f), mat3::rotateY(time*2.0f), sphere_0Pos);
+    pos = rm::RotatePoint(make_float3(-0.5f, 0.6f, 2.0f), mat3::rotateY(time*2.0f), sphere_0Pos);
     float sphere_2 = DistanceFromSphere(_p, pos, 0.2f);
     
     float plane_0 = DistanceFromPlane(_p, -0.25f);
@@ -48,7 +42,7 @@ float rm::RayMarching::MapTheWorld(float3 _p)
 
 // Apply Beer-Lambert law to generate distance based fog
 __device__
-float3 rm::RayMarching::ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient)
+float3 RayMarching::ApplyBeerLambert(float3 color, float distanceTraveled, float absorptionCoefficient)
 {
     // calculate light absorption using Beer-Lambert law
     float absorption = exp(-absorptionCoefficient * distanceTraveled);
@@ -56,9 +50,47 @@ float3 rm::RayMarching::ApplyBeerLambert(float3 color, float distanceTraveled, f
     return color * absorption + FOG_COLOR * (1.f - absorption);
 }
 
+__device__
+float3 RayMarching::gradient(float t)
+{
+    float3 red = make_float3(1.f, 0.f, 0.f);
+    float3 green = make_float3(0.f, 1.f, 0.f);
+    float3 blue = make_float3(0.f, 0.f, 1.f);
+
+    if (t < 1.0f / 3.0f)
+    {
+        // Interpolate from red to green
+        return lerp(red, green, t * 3.0f);
+    }
+    else if (t < 2.0f / 3.0f)
+    {
+        // Interpolate from green to blue
+        return lerp(green, blue, (t - 1.0f / 3.0f) * 3.0f);
+    }
+    else
+    {
+        // Interpolate from blue to red
+        return lerp(blue, red, (t - 2.0f / 3.0f) * 3.0f);
+    }
+}
+
+__device__
+float3 RayMarching::ColorFromOrbitTrap(float3 currentPosition, float3 orbitTrap)
+{
+    // Calculate the distance from the current position to the orbit trap
+    float distance = length(currentPosition - orbitTrap);
+
+    // Use the distance to generate a color value
+    // Calculate the blend factor between the current color and the next color
+    float blendFactor = (1.0f + sin((distance) * 3.1415f)) / 2.0f;
+    
+    // Blend between the current color and the next color
+    return gradient(blendFactor);
+}
+
 // from: https://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/#surface-normals-and-lighting
 __device__
-float3 rm::RayMarching::CalculateNormal(float3 _p)
+float3 RayMarching::CalculateNormal(float3 _p)
 {
     return normalize(make_float3(
         MapTheWorld(make_float3(_p.x + EPSILON, _p.y, _p.z)) - MapTheWorld(make_float3(_p.x - EPSILON, _p.y, _p.z)),
@@ -85,7 +117,7 @@ float3 rm::RayMarching::CalculateNormal(float3 _p)
 }
 
 __device__
-float3 rm::RayMarching::Raymarch(float3 ro, float3 rd)
+float3 RayMarching::Raymarch(float3 ro, float3 rd)
 {
     float3 currentPosition = ro;
     float distanceTraveled = 0.0f;
@@ -113,8 +145,10 @@ float3 rm::RayMarching::Raymarch(float3 ro, float3 rd)
             float3 directionToLight = normalize(currentPosition - lightPosition);
             // Calculate the diffuse intensity
             float diffuseIntensity = max(0.0f, dot(normal, directionToLight));
+            // Calculate the color of the object
+            float3 baseColor = ColorFromOrbitTrap(currentPosition, make_float3(0));
             // Apply light to red colored scene
-            float3 finalColor =  make_float3(1.0f, 0.0f, 0.0f) * diffuseIntensity;
+            float3 finalColor =  baseColor * diffuseIntensity;
             // Generate distance fog with Beer Lambert law
             finalColor = ApplyBeerLambert(finalColor, distanceTraveled, FOG_THICKNESS);
             
@@ -132,7 +166,7 @@ float3 rm::RayMarching::Raymarch(float3 ro, float3 rd)
     return ApplyBeerLambert(make_float3(1.0f), distanceTraveled, FOG_THICKNESS);
 }
 
-void rm::RayMarching::Init(sf::RenderWindow* _window)
+void RayMarching::Init(sf::RenderWindow* _window)
 { 
     // camera setup
     camera.pos = make_float3(0.0f, 0.0f, 0.0f);
@@ -152,7 +186,7 @@ void rm::RayMarching::Init(sf::RenderWindow* _window)
     time = 0;
 }
 
-void rm::RayMarching::Event(sf::RenderWindow* _window, sf::Event* _evt)
+void RayMarching::Event(sf::RenderWindow* _window, sf::Event* _evt)
 {
     // middle click to toggle mouse lock
     if (_evt->type == sf::Event::MouseButtonPressed && _evt->mouseButton.button == sf::Mouse::Middle)
@@ -172,7 +206,7 @@ void rm::RayMarching::Event(sf::RenderWindow* _window, sf::Event* _evt)
     }
 }
 
-void rm::RayMarching::Update(sf::RenderWindow* _window, float _dt)
+void RayMarching::Update(sf::RenderWindow* _window, float _dt)
 {
     time += _dt;
     
@@ -239,7 +273,7 @@ void rm::RayMarching::Update(sf::RenderWindow* _window, float _dt)
 }
 
 __device__ 
-float3 rm::RayMarching::Render(int _pX, int _pY)
+float3 RayMarching::Render(int _pX, int _pY)
 {
     //screen resolution
     float2 resolution = make_float2((float)ImageWidth, (float)ImageHeight);   
@@ -257,7 +291,7 @@ float3 rm::RayMarching::Render(int _pX, int _pY)
     return shaded_color;
 }
 
-void rm::RayMarching::Shutdown()
+void RayMarching::Shutdown()
 {
     
 }
