@@ -4,7 +4,6 @@
 ## Menger Sponge
 ![Menger Sponge](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/Menger.png)
 
--
 ## Controls
 
 W : Forward\
