@@ -22,6 +22,11 @@ inline float3 rm::RotatePoint(float3 point, mat3 rotation, float3 origin)
 __device__
 float RayMarching::MapTheWorld(float3 _p)
 {
+    // create 2 mandelbuld next to each other by 1 unit and rotate them
+    float3 p1 = RotatePoint(_p, mat3::rotateY(-time), make_float3(0.0f, 0.0f, 0.0f));
+    float3 p2 = RotatePoint(_p + make_float3(1.0f,0.0f,0.0f), mat3::rotateY(time), make_float3(0.0f, 0.0f, 0.0f));
+    return SmoothMin(Mandelbulb(p1), Mandelbulb(p2), 0.01f);
+
     return MengerCube(_p);
     
     float3 sphere_0Pos = make_float3(0.0f, 0.0f, 2.0f);

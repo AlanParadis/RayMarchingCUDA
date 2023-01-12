@@ -59,26 +59,79 @@ namespace rm
     
     // params:
     // p: arbitrary point in 3D space
+    // returns: the distance between the point and Menger Sponge
     __device__
     float MengerCube(float3 _p)
     {
-        float d = DistanceFromBox(_p,make_float3(1.0));
-        
-        float cube = DistanceFromBox((_p-0.65f) * 2.86f,make_float3(1.0))/2.86f;
+        // Initialize distance from standard cube
+        float distanceFromStandardCube = DistanceFromBox(_p, make_float3(1.0));
 
-        float s = 1.0;
-        for( int m=0; m<6; m++ )
+        // Scale point and calculate distance from scaled cube
+        float3 scaledPoint = (_p - 0.65f) * 2.86f;
+        float distanceFromScaledCube = DistanceFromBox(scaledPoint, make_float3(1.0)) / 2.86f;
+
+        float scalingFactor = 1.0;
+        for (int i = 0; i < 10; i++)
         {
-           float3 a = fmodf( _p*s, 2.0 )-1.0;
-           s *= 3.0;
-           float3 r = fabsf(1.0 - 3.0 * fabsf(a));
-           
-           float c = DistanceFromCross(r)/s;
-           d = max(cube,max(d,c));
-        } 
+            // Calculate point in relation to current iteration's grid
+            float3 pointInGrid = fmodf(_p * scalingFactor, 2.0) - 1.0;
+            scalingFactor *= 3.0;
 
-        return d;
+            // Calculate distance from cross shape
+            float3 distanceFromCrossShape = fabsf(1.0 - 3.0 * fabsf(pointInGrid));
+            float distance = DistanceFromCross(distanceFromCrossShape) / scalingFactor;
+
+            // Update distance from Menger cube
+            distanceFromStandardCube = max(distanceFromScaledCube, max(distanceFromStandardCube, distance));
+        }
+
+        return distanceFromStandardCube;
     }
+    
+    // params:
+    // p: arbitrary point in 3D space
+    // returns: the distance between the point and the Mandelbulb
+    __device__
+    float Mandelbulb(const float3& point) 
+    {
+        // Set the maximum number of iterations
+        const int kMaxIterations = 4;
+        // Set the exponent value
+        const float kExponent = 3.5f;
+        // Set the bailout value
+        const float kBailout = 128.0f;
+        // Initialize the working point
+        float3 workingPoint = point;
+        // Get the dot product of the working point
+        float dotProduct = dot(workingPoint, workingPoint);
+        // Initialize the delta z value
+        float deltaZ = 1.0f;
+
+        for (int i = 0; i < kMaxIterations; i++) {
+            // Update the delta z value
+            deltaZ = 8.0f * pow(dotProduct, kExponent) * deltaZ + 1.0f;
+
+            // Get the distance from the origin
+            float distance = length(workingPoint);
+            // Get the angle in the y-z plane
+            float angleYZ = 8.0f * acos(workingPoint.y / distance);
+            // Get the angle in the x-z plane
+            float angleXZ = 8.0f * atan2(workingPoint.x, workingPoint.z);
+            // Update the working point
+            workingPoint = point + pow(distance, 8.0f) * make_float3(sin(angleYZ) * sin(angleXZ), cos(angleYZ), sin(angleYZ) * cos(angleXZ));
+
+            // Update the dot product
+            dotProduct = dot(workingPoint, workingPoint);
+            // Check if the dot product is greater than the bailout value
+            if (dotProduct > kBailout) {
+                break;
+            }
+        }
+
+        // Return the final value
+        return 0.25f * log(dotProduct) * sqrt(dotProduct) / deltaZ;
+    }
+
 
 }
 #endif  /* !SDF_H_ */

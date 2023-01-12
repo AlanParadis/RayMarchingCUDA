@@ -1,5 +1,9 @@
 # RayMarchingCUDA
-![last render](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/LastRender.png)
+## Mandelbulb
+![Mandelbulb](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/Mandelbulb.gif)
+## Menger Sponge
+![Menger Sponge](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/Menger.png)
+
 -
 ## Controls
 
