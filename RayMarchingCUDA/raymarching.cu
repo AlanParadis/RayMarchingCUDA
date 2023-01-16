@@ -22,9 +22,11 @@ inline float3 rm::RotatePoint(float3 point, mat3 rotation, float3 origin)
 __device__
 float RayMarching::MapTheWorld(float3 _p)
 {
+    return RomanescoBrocoli(_p);
+    
     // create 2 mandelbuld next to each other by 1 unit and rotate them
     float3 p1 = RotatePoint(_p, mat3::rotateY(-time), make_float3(0.0f, 0.0f, 0.0f));
-    float3 p2 = RotatePoint(_p + make_float3(1.0f,0.0f,0.0f), mat3::rotateY(time), make_float3(0.0f, 0.0f, 0.0f));
+    float3 p2 = RotatePoint(_p + make_float3(0.5f,0.0f,0.0f), mat3::rotateY(time), make_float3(0.0f, 0.0f, 0.0f));
     return SmoothMin(Mandelbulb(p1), Mandelbulb(p2), 0.01f);
 
     return MengerCube(_p);
@@ -168,14 +170,14 @@ float3 RayMarching::Raymarch(float3 ro, float3 rd)
 
     // If we get here, we didn't hit anything so just
     // return a background color
-    return ApplyBeerLambert(make_float3(1.0f), distanceTraveled, FOG_THICKNESS);
+    return FOG_COLOR;//ApplyBeerLambert(make_float3(1.0f), distanceTraveled, FOG_THICKNESS);
 }
 
 void RayMarching::Init(sf::RenderWindow* _window)
 { 
     // camera setup
-    camera.pos = make_float3(0.0f, 0.0f, 0.0f);
-    camera.dir = make_float3(1.0f, 0.0f, 0.0f);
+    camera.pos = make_float3(-1.5f, 0.0f, -1.5f);
+    camera.dir = make_float3(1.0f, 0.0f, 1.0f);
 	camera.right = normalize(cross(camera.dir, make_float3(0, 1, 0)));
 	camera.up = normalize(cross(camera.right, camera.dir));
 	float fov = FOV / 180.0f * float(M_PI);

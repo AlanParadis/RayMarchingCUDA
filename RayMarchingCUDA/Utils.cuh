@@ -11,6 +11,9 @@
 #include "CUDAHelper.cuh"
 #include "Settings.cuh"
 
+#define PI 3.141592653589f
+#define PHI 1.61803398875f
+
 // get sign function
 #define sign(x) ((x > 0.f) - (x < 0.f))
 // clamp macro
@@ -50,5 +53,55 @@ namespace rm
     {
         return (1.0f - t) * a + t * b;
     }
+    
+    // floor
+    __device__
+    inline float3 floor(float3 v)
+    {
+        return make_float3(std::floorf(v.x), std::floorf(v.y), std::floorf(v.z));
+    }
+    
+    //fract function
+    __device__
+    inline float3 fract(float3 v)
+    {
+        return v - rm::floor(v);
+    }
+
+    __device__
+    inline float fract(float v)
+    {
+        return v - std::floor(v);
+    }
+    
+    // floor
+    __device__
+    inline float2 floor(float2 v)
+    {
+        return make_float2(std::floorf(v.x), std::floorf(v.y));
+    }
+    
+    //fract function
+    __device__
+    inline float2 fract(float2 v)
+    {
+        return v - rm::floor(v);
+    }
+
+    //smoothstep
+    __device__
+        inline float smoothstep(float edge0, float edge1, float x)
+    {
+        float t = clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+        return t * t * (3.0f - 2.0f * t);
+    }
+
+    //glm::mix
+    __device__
+    inline float mix(float x, float y, float a)
+    {
+        return x * (1.0f - a) + y * a;
+    }
+    
 }
 #endif  /* !UTILS_H_ */

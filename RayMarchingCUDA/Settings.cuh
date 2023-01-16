@@ -24,6 +24,6 @@
 
 
 #define FOG_COLOR make_float3(0.39f, 0.58f, 0.92f)
-#define FOG_THICKNESS 0.155f
+#define FOG_THICKNESS 0.200f
 
 #endif  /* !SETTINGS_H_ */
