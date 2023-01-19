@@ -17,6 +17,15 @@ namespace rm
     //function that take a point, mat3 and a origin a return the rotated point
     __device__ __host__
     inline float3 RotatePoint(float3 point, mat3 rotation, float3 origin);
+
+    struct RaymarchInfo
+    {
+        float distanceToClosest;
+        int steps;
+        float distanceTraveled;
+        float minDistance;
+    };
+
      
     struct Camera
     {
@@ -42,6 +51,8 @@ namespace rm
         float3 ColorFromOrbitTrap(float3 currentPosition, float3 orbitTrap);
         __device__
         float3 CalculateNormal(float3 _p);
+        __device__
+        RaymarchInfo RaymarchGetInfo(float3 ro, float3 rd, float sharpness);
         __device__ 
         float3 Raymarch(float3 ro, float3 rd);
 

@@ -48,11 +48,42 @@ namespace rm
         return make_float3(std::fmaxf(a.x, b.x), std::fmaxf(a.y, b.y), std::fmaxf(a.z, b.z));
     }
 
+    //float lerp
+    __device__
+    inline float lerp(float a, float b, float t)
+    {
+        //clamp t
+        t = clamp(t, 0.f, 1.f);
+        return a + t * (b - a);
+    }
+
+    // float3 lerp
     __device__
     inline float3 lerp(float3 a, float3 b, float t)
     {
+        //clamp t
+        t = clamp(t, 0.f, 1.f);
         return (1.0f - t) * a + t * b;
     }
+
+    //cerp float
+    __device__
+    inline float cerp(float a, float b, float t)
+    {
+        // clamp t
+        t = clamp(t, 0.0f, 1.0f);
+        return lerp(a, b, t * t * (3.0f - 2.0f * t));
+    }
+
+    //cerp float3
+    __device__
+    inline float3 cerp(float3 a, float3 b, float t)
+    {
+        //clamp t
+        t = clamp(t, 0.0f, 1.0f);
+        return lerp(a, b, t * t * (3.0f - 2.0f * t));
+    }
+    
     
     // floor
     __device__

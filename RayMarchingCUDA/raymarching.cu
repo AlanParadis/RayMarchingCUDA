@@ -22,14 +22,16 @@ inline float3 rm::RotatePoint(float3 point, mat3 rotation, float3 origin)
 __device__
 float RayMarching::MapTheWorld(float3 _p)
 {
-    return RomanescoBrocoli(_p);
+    //return RomanescoBrocoli(_p);
     
     // create 2 mandelbuld next to each other by 1 unit and rotate them
-    float3 p1 = RotatePoint(_p, mat3::rotateY(-time), make_float3(0.0f, 0.0f, 0.0f));
-    float3 p2 = RotatePoint(_p + make_float3(0.5f,0.0f,0.0f), mat3::rotateY(time), make_float3(0.0f, 0.0f, 0.0f));
-    return SmoothMin(Mandelbulb(p1), Mandelbulb(p2), 0.01f);
+    //float3 p1 = RotatePoint(_p, mat3::rotateY(-time/10), make_float3(0.0f, 0.0f, 0.0f));
+    //float3 p2 = RotatePoint(_p + make_float3(0.5f,0.0f,0.0f), mat3::rotateY(time/10.0), make_float3(0.0f, 0.0f, 0.0f));
+    
+    //return SmoothMin(Mandelbulb(p1), Mandelbulb(p2), 0.01f);
+    return SmoothMin(Mandelbulb(_p), Mandelbulb(_p + make_float3(0.5f,0.0f,0.0f)), 0.01f);
 
-    return MengerCube(_p);
+    //return MengerCube(_p);
     
     float3 sphere_0Pos = make_float3(0.0f, 0.0f, 2.0f);
     float sphere_0 = DistanceFromSphere(_p, sphere_0Pos, 0.5f);
@@ -124,13 +126,50 @@ float3 RayMarching::CalculateNormal(float3 _p)
 }
 
 __device__
+RaymarchInfo RayMarching::RaymarchGetInfo(float3 ro, float3 rd, float sharpness) {
+    float3 currentPosition = ro;
+    float distanceTraveled = 0.0f;
+    float distanceToClosest = 0.0f;
+    float minDistance = 1.0f;
+    
+    int step = 0;
+
+    for (; step < NUMBER_OF_STEPS; step++) {
+        // Calculate our current position along the ray
+        currentPosition = ro + rd * distanceTraveled;
+
+        // get distance to world geometry
+        distanceToClosest = MapTheWorld(currentPosition);
+
+        // accumulate the distance traveled thus far
+        distanceTraveled += distanceToClosest;
+
+        // update min distance
+        minDistance = min(minDistance, sharpness * distanceToClosest / distanceTraveled);
+
+        if (distanceToClosest < MINIMUM_HIT_DISTANCE) {
+            break;
+        }
+
+        if (distanceTraveled > MAXIMUM_TRACE_DISTANCE) {
+            break;
+        }
+    }
+
+    return {distanceToClosest, step, distanceTraveled, minDistance};
+}
+
+__device__
 float3 RayMarching::Raymarch(float3 ro, float3 rd)
 {
     float3 currentPosition = ro;
     float distanceTraveled = 0.0f;
     float distanceToClosest = 0.0f;
+    float minDistance = MAXIMUM_TRACE_DISTANCE;
 
-    for (int i = 0; i < NUMBER_OF_STEPS; ++i)
+    float3 finalColor = make_float3(0);
+    
+    for (int i = 0; i < NUMBER_OF_STEPS; i++)
     {
         // Calculate our current position along the ray
         currentPosition = ro + rd * distanceTraveled;
@@ -140,22 +179,39 @@ float3 RayMarching::Raymarch(float3 ro, float3 rd)
 
         // accumulate the distance traveled thus far
         distanceTraveled += distanceToClosest;
+        // update min distance
+        if(distanceToClosest < minDistance){
+            minDistance = distanceToClosest;
+        }
         
         if (distanceToClosest < MINIMUM_HIT_DISTANCE) // hit
-        {
+        {            
+            // Calculate the color of the object
+            float3 baseColor = ColorFromOrbitTrap(currentPosition, make_float3(0.0f));
+            
             // We hit something! Return red for now
             float3 normal = CalculateNormal(currentPosition);
-            // For now, hard-code the light's position in our scene
-            float3 lightPosition = make_float3(2.0f, -5.0f, 3.0f);
-            // Calculate the unit direction vector that points from
-            // the point of intersection to the light source
-            float3 directionToLight = normalize(currentPosition - lightPosition);
-            // Calculate the diffuse intensity
-            float diffuseIntensity = max(0.0f, dot(normal, directionToLight));
-            // Calculate the color of the object
-            float3 baseColor = ColorFromOrbitTrap(currentPosition, make_float3(0));
-            // Apply light to red colored scene
-            float3 finalColor =  baseColor * diffuseIntensity;
+
+            float3 reflected = rd - 2.0*dot(rd, normal) * normal;
+
+            //Shadow casting
+		    float k = 1.0;
+            float3 light_pt = currentPosition;
+            light_pt += normal * minDistance * 10;
+            RaymarchInfo raymarchInfoFromLight = RaymarchGetInfo(light_pt, LIGHT_DIRECTION, SHADOW_SHARPNESS);
+            k = raymarchInfoFromLight.minDistance * min(raymarchInfoFromLight.distanceTraveled, 1.0);
+
+            //Get diffuse lighting
+            k = min(k, SHADOW_DARKNESS * 0.5 * (dot(normal, LIGHT_DIRECTION) - 1.0) + 1.0);
+
+            //Don't make shadows entirely dark
+            k = max(k, 1.0 - SHADOW_DARKNESS);
+            finalColor += baseColor * LIGHT_COLOR * k;
+
+            //Add small amount of ambient occlusion
+            float ambient = 1.0 / (1.0 + i * AMBIENT_OCCLUSION_STRENGTH);
+            finalColor += (1.0 - ambient) * AMBIENT_OCCLUSION_COLOR_DELTA;
+            
             // Generate distance fog with Beer Lambert law
             finalColor = ApplyBeerLambert(finalColor, distanceTraveled, FOG_THICKNESS);
             
@@ -170,7 +226,18 @@ float3 RayMarching::Raymarch(float3 ro, float3 rd)
 
     // If we get here, we didn't hit anything so just
     // return a background color
-    return FOG_COLOR;//ApplyBeerLambert(make_float3(1.0f), distanceTraveled, FOG_THICKNESS);
+    finalColor = FOG_COLOR;
+    
+    // draw sun
+    float sun_spec = dot(rd, LIGHT_DIRECTION) - 1.0 + SUN_SIZE;
+	sun_spec = min(std::exp(sun_spec * SUN_SHARPNESS / SUN_SIZE), 1.0);
+	finalColor += LIGHT_COLOR * sun_spec;
+    
+    // Add glow effect based on how close the surface the ray ever get
+    float glowIntensity = lerp(0.35f, 0, minDistance*10.f);
+    finalColor += GLOW_COLOR * glowIntensity;
+    
+    return finalColor;
 }
 
 void RayMarching::Init(sf::RenderWindow* _window)
