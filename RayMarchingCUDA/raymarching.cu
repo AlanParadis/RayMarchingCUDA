@@ -22,6 +22,7 @@ inline float3 rm::RotatePoint(float3 point, mat3 rotation, float3 origin)
 __device__
 float RayMarching::MapTheWorld(float3 _p)
 {
+    return DistanceFromSierpinski(_p);
     //return RomanescoBrocoli(_p);
     
     // create 2 mandelbuld next to each other by 1 unit and rotate them

@@ -579,6 +579,70 @@ inline __host__ __device__ void operator*=(double4& a, double b) {
     a.x *= b; a.y *= b; a.z *= b; a.w *= b;
 }
 
+// compare two vectors
+
+inline __host__ __device__ bool operator==(int2 a, int2 b) {
+    return (a.x == b.x) && (a.y == b.y);
+}
+
+inline __host__ __device__ bool operator==(int3 a, int3 b) {
+    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+}
+
+inline __host__ __device__ bool operator==(int4 a, int4 b) {
+    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z) && (a.w == b.w);
+}
+
+inline __host__ __device__ bool operator==(float2 a, float2 b) {
+    return (a.x == b.x) && (a.y == b.y);
+}
+
+inline __host__ __device__ bool operator==(float3 a, float3 b) {
+    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+}
+
+inline __host__ __device__ bool operator==(float4 a, float4 b) {
+    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z) && (a.w == b.w);
+}
+
+inline __host__ __device__ bool operator==(double2 a, double2 b) {
+    return (a.x == b.x) && (a.y == b.y);
+}
+
+inline __host__ __device__ bool operator==(double3 a, double3 b) {
+    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+}
+
+inline __host__ __device__ bool operator==(double4 a, double4 b) {
+    return (a.x == b.x) && (a.y == b.y) && (a.z == b.z) && (a.w == b.w);
+}
+
+// greater
+
+inline __host__ __device__ bool operator>(int2 a, int2 b) {
+    return (a.x > b.x) && (a.y > b.y);
+}
+
+inline __host__ __device__ bool operator>(int3 a, int3 b) {
+    return (a.x > b.x) && (a.y > b.y) && (a.z > b.z);
+}
+
+inline __host__ __device__ bool operator>(int4 a, int4 b) {
+    return (a.x > b.x) && (a.y > b.y) && (a.z > b.z) && (a.w > b.w);
+}
+
+inline __host__ __device__ bool operator>(float2 a, float2 b) {
+    return (a.x > b.x) && (a.y > b.y);
+}
+
+inline __host__ __device__ bool operator>(float3 a, float3 b) {
+    return (a.x > b.x) && (a.y > b.y) && (a.z > b.z);
+}
+
+inline __host__ __device__ bool operator>(float4 a, float4 b) {
+    return (a.x > b.x) && (a.y > b.y) && (a.z > b.z) && (a.w > b.w);
+}
+
 // Dot product
 
 //float2
@@ -644,6 +708,10 @@ inline __host__ __device__ float length(float2 a) {
 
 inline __host__ __device__ float length(float3 a) {
     return sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+}
+
+inline __host__ __device__ float length(float4 a) {
+    return sqrt(a.x * a.x + a.y * a.y + a.z * a.z + a.w * a.w);
 }
 
 // Strip off the fourth component of a vector.

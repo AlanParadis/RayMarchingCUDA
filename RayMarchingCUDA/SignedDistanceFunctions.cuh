@@ -132,6 +132,66 @@ namespace rm
         return 0.25f * log(dotProduct) * sqrt(dotProduct) / deltaZ;
     }
 
+    // params:
+    // p: arbitrary point in 3D space
+    // returns: the distance between the point and a tetrahedron
+    __device__
+    float DistanceFromTetrahedron(float3 _p)
+    {        
+        return (max(
+	        abs(_p.x + _p.y) - _p.z,
+	        abs(_p.x - _p.y) + _p.z) - 1.0) / sqrt(3.);
+    }
+
+    // Fold a point across a plane defined by a point and a normal
+    // The normal should face the side to be reflected
+    __device__
+    float3 SierpinskiFold(float3 point, float3 pointOnPlane, float3 planeNormal)
+    {
+        // Center plane on origin for distance calculation
+        float distToPlane = dot(point - pointOnPlane, planeNormal);
+        
+        // We only want to reflect if the dist is negative
+        distToPlane = min(distToPlane, 0.0);
+        return point - 2.0 * distToPlane * planeNormal;
+    }
+
+    __device__
+    float DistanceFromSierpinski(float3 p)
+    {
+        // Vertices of the tetrahedron defined by the SDF
+        const float3 vertices[4] = {
+            float3{ 1.0, 1.0, 1.0 },
+            float3{ -1.0, 1.0, -1.0 },
+            float3{ -1.0, -1.0, 1.0 },
+            float3{ 1.0, -1.0, -1.0 } };
+        
+        float scale = 1.0f;
+        for (int i = 0; i < 9; i++)
+        {
+            // Scale point toward corner vertex, update scale accumulator
+            p -= vertices[0];
+            p *= 2.0;
+            p += vertices[0];
+            
+            scale *= 2.0;
+            
+            // Fold point across each plane
+            for (int i = 1; i <= 3; i++)
+            {
+                // The plane is defined by:
+                // Point on plane: The vertex that we are reflecting across
+                // Plane normal: The direction from said vertex to the corner vertex
+                float3 normal = normalize(vertices[0] - vertices[i]); 
+                p = SierpinskiFold(p, vertices[i], normal);
+            }
+        }
+        // Now that the space has been distorted by the IFS,
+        // just return the distance to a tetrahedron
+        // Divide by scale accumulator to correct the distance field
+        return DistanceFromTetrahedron(p) / scale;
+    }
+
 #pragma region Romanesco Broccoli 
 
     // remap a 2D rounded cone to a circle
