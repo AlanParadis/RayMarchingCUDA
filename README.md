@@ -5,6 +5,8 @@
 ![Menger Sponge](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/img/Menger.png)
 ## Romanesco Broccoli
 ![Romanesco Broccoli](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/img/Romanesco-Broccoli.png)
+## Sierpinski Triangle
+![Romanesco Broccoli](https://raw.githubusercontent.com/AlanParadis/RayMarchingCUDA/master/img/Sierpinski.png)
 
 ## Controls
 
