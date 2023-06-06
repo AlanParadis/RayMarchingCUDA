@@ -22,17 +22,36 @@ inline float3 rm::RotatePoint(float3 point, mat3 rotation, float3 origin)
 __device__
 float RayMarching::MapTheWorld(float3 _p)
 {
-    return DistanceFromSierpinski(_p);
-    //return RomanescoBrocoli(_p);
-    
-    // create 2 mandelbuld next to each other by 1 unit and rotate them
-    //float3 p1 = RotatePoint(_p, mat3::rotateY(-time/10), make_float3(0.0f, 0.0f, 0.0f));
-    //float3 p2 = RotatePoint(_p + make_float3(0.5f,0.0f,0.0f), mat3::rotateY(time/10.0), make_float3(0.0f, 0.0f, 0.0f));
-    
-    //return SmoothMin(Mandelbulb(p1), Mandelbulb(p2), 0.01f);
-    return SmoothMin(Mandelbulb(_p), Mandelbulb(_p + make_float3(0.5f,0.0f,0.0f)), 0.01f);
-
-    //return MengerCube(_p);
+    switch (fractal)
+    {
+    case rm::MANDELBULB:
+        // create 2 mandelbuld next to each other by 1 unit and rotate them
+        //float3 p1 = RotatePoint(_p, mat3::rotateY(-time/10), make_float3(0.0f, 0.0f, 0.0f));
+        //float3 p2 = RotatePoint(_p + make_float3(0.75f,0.0f,0.0f), mat3::rotateY(time/10.0), make_float3(0.0f, 0.0f, 0.0f));
+        //return SmoothMin(Mandelbulb(p1), Mandelbulb(p2), 0.1f);
+        return Mandelbulb(_p);
+        break;
+    case rm::ROMANESCO:
+        float3 romanescoPoint = make_float3(0, 2.5, 0);
+        // rotate romanesco a bit up
+        romanescoPoint = RotatePoint(_p + romanescoPoint, mat3::rotateX(DEG2RAD(-45)), make_float3(0, 0, 0));
+        // scaled down to fit in the scene
+        float romanesco = RomanescoBrocoli(romanescoPoint) * 0.5f;
+        return romanesco;
+        break;
+    case rm::SIERPINSKI:
+        float3 sierpinskiPoint = make_float3(-1.5f, 1.f, -1.5f);
+        float sierpinski = DistanceFromSierpinski(_p + sierpinskiPoint);
+        return sierpinski;
+        break;
+    case rm::MENGER:
+        float3 mengerPoint = make_float3(2.5, 1.25f, 1.5f);
+        float menger = MengerCube(_p + mengerPoint);
+        return menger;
+        break;
+    default:
+        break;
+    }
     
     float3 sphere_0Pos = make_float3(0.0f, 0.0f, 2.0f);
     float sphere_0 = DistanceFromSphere(_p, sphere_0Pos, 0.5f);
@@ -235,7 +254,7 @@ float3 RayMarching::Raymarch(float3 ro, float3 rd)
 	finalColor += LIGHT_COLOR * sun_spec;
     
     // Add glow effect based on how close the surface the ray ever get
-    float glowIntensity = lerp(0.35f, 0, minDistance*10.f);
+    float glowIntensity = lerp(GLOW_INTENSITY,0, minDistance* GLOW_THICKNESS);
     finalColor += GLOW_COLOR * glowIntensity;
     
     return finalColor;
@@ -244,8 +263,9 @@ float3 RayMarching::Raymarch(float3 ro, float3 rd)
 void RayMarching::Init(sf::RenderWindow* _window)
 { 
     // camera setup
-    camera.pos = make_float3(-1.5f, 0.0f, -1.5f);
-    camera.dir = make_float3(1.0f, 0.0f, 1.0f);
+    //camera.pos = make_float3(-5.0f, 1.5f, 5.5f);
+    camera.pos = make_float3(-1.25f, 0.375f, 1.135f);
+    camera.dir = normalize(make_float3(50.0f, -27.f, -50.0f));
 	camera.right = normalize(cross(camera.dir, make_float3(0, 1, 0)));
 	camera.up = normalize(cross(camera.right, camera.dir));
 	float fov = FOV / 180.0f * float(M_PI);
@@ -317,6 +337,23 @@ void RayMarching::Update(sf::RenderWindow* _window, float _dt)
     {
         // Move camera down
         camera.pos -= camera.up * CAM_SPEED * _dt;
+    }
+    // change fractal
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad1))
+    {
+        fractal = rm::MANDELBULB;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad2))
+    {
+        fractal = rm::ROMANESCO;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad3))
+    {
+        fractal = rm::SIERPINSKI;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Numpad4))
+    {
+        fractal = rm::MENGER;
     }
 
     // no mouse look is mouse is unlocked

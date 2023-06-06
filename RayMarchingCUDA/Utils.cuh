@@ -14,6 +14,11 @@
 #define PI 3.141592653589f
 #define PHI 1.61803398875f
 
+// deg to rad macro
+#define DEG2RAD(x) (x * PI / 180.0f)
+// rad to deg
+#define RAD2DEG(x) (x * 180.0f / PI)
+
 // get sign function
 #define sign(x) ((x > 0.f) - (x < 0.f))
 // clamp macro

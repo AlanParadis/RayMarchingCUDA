@@ -1,13 +1,13 @@
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
-#define ScreenWidth 1024
-#define ScreenHeight 768
+#define ScreenWidth 1224
+#define ScreenHeight 968
 
-#define ImageWidth 1024
-#define ImageHeight 768
+#define ImageWidth ScreenWidth/2
+#define ImageHeight ScreenHeight/2
 
-#define NB_THREAD 50
+#define NB_THREAD 153
 
 #define EPSILON 0.00001f
 
@@ -18,7 +18,7 @@
 #define CAM_SENSITIVITY 0.001f
 #define FOV 120.0f
 
-#define NUMBER_OF_STEPS 256
+#define NUMBER_OF_STEPS 320
 #define MINIMUM_HIT_DISTANCE 0.0001f
 #define MAXIMUM_TRACE_DISTANCE 10
 
@@ -28,6 +28,8 @@
 
 //lime green glow color
 #define GLOW_COLOR make_float3(0.0f, 1.0f, 0.25f)
+#define GLOW_INTENSITY 0.1f
+#define GLOW_THICKNESS 5.5f
 
 #define AMBIENT_OCCLUSION_SAMPLES 10
 

@@ -71,7 +71,7 @@ namespace rm
         float distanceFromScaledCube = DistanceFromBox(scaledPoint, make_float3(1.0)) / 2.86f;
 
         float scalingFactor = 1.0;
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 7; i++)
         {
             // Calculate point in relation to current iteration's grid
             float3 pointInGrid = fmodf(_p * scalingFactor, 2.0) - 1.0;

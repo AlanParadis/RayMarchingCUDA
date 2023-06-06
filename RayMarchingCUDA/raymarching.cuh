@@ -36,6 +36,14 @@ namespace rm
         float3 up;
         float3 right;
     };
+    
+    enum Fractal
+    {
+        MANDELBULB,
+        ROMANESCO,
+        SIERPINSKI,
+        MENGER
+    };
 
     class RayMarching
     {
@@ -60,6 +68,8 @@ namespace rm
         // time since Raymarching Init
         float time;
         bool isMouseLock;
+        Fractal fractal;
+        
 
     public:
         void Init(sf::RenderWindow* _window);

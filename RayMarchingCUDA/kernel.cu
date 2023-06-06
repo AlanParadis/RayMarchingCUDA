@@ -163,6 +163,7 @@ MAIN()
 		glVertex2f(float(ScreenWidth), 0.0f);
 		glTexCoord2f(0.0f, 1.0f);
 		glVertex2f(0.0f, 0.0f);
+
 		glEnd();
 
 		glFlush();
